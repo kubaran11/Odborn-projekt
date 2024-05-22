@@ -1,9 +1,10 @@
 package org.example;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 public class DBConnect {
-    private static String url = "jdbc:sqlite:employeeSystem.db";
+    private static String url = "jdbc:sqlite::resource:employeeSystem.db";
 
     public static Connection connect() {
         Connection conn = null;
@@ -31,7 +32,7 @@ public class DBConnect {
     }
 
     public static int insertChip(String date) {
-        String sql = "INSERT INTO Chip(old) VALUES(?)";
+        String sql = "INSERT INTO Chip(name) VALUES(?)";
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, date);
@@ -98,10 +99,10 @@ public class DBConnect {
         }
     }
 
-    public static void insertEmployeeWithChip(String name, String chipDate, String chipCode) {
-        int employeeId = insertEmployee(name, chipCode);
+    public static void insertEmployeeWithChip(Employee employee) {
+        int employeeId = insertEmployee(employee.getName(), employee.getChipCode());
         if (employeeId != -1) {
-            int chipId = insertChip(chipDate);
+            int chipId = insertChip(employee.getChipCode());
             if (chipId != -1) {
                 addChipToEmployee(employeeId, chipId);
                 System.out.println("zaměstnanec je přdán");
@@ -113,21 +114,20 @@ public class DBConnect {
         }
     }
 
-    public static void printAllEmployees() {
+    public ArrayList<Employee> getAllEmployees() {
         String sql = "SELECT * FROM Employees";
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            System.out.println("tabulka zaměstnanců:");
+            ArrayList<Employee> employees = new ArrayList<>();
             while (rs.next()) {
-                System.out.println("ID: " + rs.getInt("idPerson") +
-                        ", Name: " + rs.getString("name") +
-                        ", ID Chip: " + rs.getInt("idChip") +
-                        ", Chip Code: " + rs.getString("chipCode"));
+                employees.add(new Employee(rs.getString("name"), rs.getString("idChip"), rs.getString("chipCode")));
             }
+            return employees;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        return null;
     }
     public static void printAllChips() {
         String sql = "SELECT * FROM Chip";
@@ -144,22 +144,6 @@ public class DBConnect {
         }
     }
 
-    public static void main(String[] args) {
-        createNewTable();
-
-        insertEmployeeWithChip("Honza", "2023-12-12", "1234");
-        insertEmployeeWithChip("Karel", "2024-01-01", "5678");
-        insertEmployeeWithChip("Franta", "2024-02-02", "91011");
-
-        System.out.println("\nAll Employees:");
-        printAllEmployees();
-
-        System.out.println("\nAll Chips:");
-        printAllChips();
-
-        System.out.println("\nChip ages:");
-        readNotes();
-    }
 }
 
 // tohle je na mě už vážne moc já to nezzládám prosím pomoc 5 hodin to tu nějak dělám a pořád nějaké errory udělám jednu část a potom na mě vyleze 5 nových erororů hmm to je fakt sranda ani tan chatgpt to necápe co má asi tak dělat proč tohle vůbec píšu já jsem asi vážně zoufalej proč proč proč
